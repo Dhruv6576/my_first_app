@@ -1,383 +1,268 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/gestures.dart';
-// Note: To use the 'Inter' font, you would need to add the
-// google_fonts package to your pubspec.yaml file:
-// dependencies:
-//   google_fonts: ^6.1.0
-//
-// Then, uncomment the following line:
-// import 'package:google_fonts/google_fonts.dart';
+import 'login_screen.dart';
 
-void main() {
-  runApp(const MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class SignupScreen extends StatefulWidget {
+  const SignupScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'HCC Sign Up',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        primarySwatch: Colors.purple,
-        // Uncomment this line to use the Inter font:
-        // textTheme: GoogleFonts.interTextTheme(Theme.of(context).textTheme),
-        // This sets the base background color for the app
-        scaffoldBackgroundColor: const Color(0xFFF3F4F6),
-        // This sets the background for elements like cards, dialogs
-        canvasColor: Colors.white,
-      ),
-      home: const SignUpScreen(),
-    );
-  }
+  State<SignupScreen> createState() => _SignupScreenState();
 }
 
-// 1. Converted to StatefulWidget
-class SignUpScreen extends StatefulWidget {
-  const SignUpScreen({super.key});
-
-  @override
-  State<SignUpScreen> createState() => _SignUpScreenState();
-}
-
-// 2. Created State class to hold logic
-class _SignUpScreenState extends State<SignUpScreen> {
-  // 3. Added all controllers from your logic + UI fields
+class _SignupScreenState extends State<SignupScreen> {
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _confirmPasswordController = TextEditingController(); // Added for logic
-  final _mobileController = TextEditingController(); // Added from UI
-  final _roomController = TextEditingController(); // Added from UI
-
+  final _mobileController = TextEditingController();
+  final _roomController = TextEditingController();
   bool _loading = false;
 
-  // 4. Added your registerUser function
-  Future<void> registerUser() async {
-    // Check for mounted widget before showing SnackBar
-    if (!mounted) return;
-    if (_passwordController.text.trim() !=
-        _confirmPasswordController.text.trim()) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Passwords do not match ❌')),
-      );
-      return;
-    }
-
-    // Check if all fields are filled (basic validation)
-    if (_nameController.text.isEmpty ||
-        _emailController.text.isEmpty ||
-        _passwordController.text.isEmpty ||
-        _mobileController.text.isEmpty ||
-        _roomController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fill all fields')),
-      );
-      return;
-    }
-
+  Future<void> signupUser() async {
     setState(() => _loading = true);
-
     try {
-      UserCredential userCredential =
-          await FirebaseAuth.instance.createUserWithEmailAndPassword(
+      await FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
 
-      // 5. Updated Firestore document to include ALL fields
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(userCredential.user!.uid)
-          .set({
-        'fullName': _nameController.text.trim(),
-        'email': _emailController.text.trim(),
-        'mobileNumber': _mobileController.text.trim(), // Added
-        'roomNumber': _roomController.text.trim(), // Added
-        'createdAt': Timestamp.now(),
-        'totalCommission': 0, // From your project plan
-      });
-
-      if (!mounted) return; // Check if widget is still in tree
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Account Created ✅')),
+        const SnackBar(content: Text('Account Created Successfully ✅')),
       );
-      Navigator.pop(context); // Go back to login screen
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const LoginScreen()),
+      );
     } on FirebaseAuthException catch (e) {
-      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(e.message ?? 'Signup failed')),
       );
     } finally {
-      if (mounted) {
-        setState(() => _loading = false);
-      }
+      setState(() => _loading = false);
     }
   }
 
-  // 6. Added dispose method for controllers
-  @override
-  void dispose() {
-    _nameController.dispose();
-    _emailController.dispose();
-    _passwordController.dispose();
-    _confirmPasswordController.dispose();
-    _mobileController.dispose();
-    _roomController.dispose();
-    super.dispose();
-  }
-
-  // 7. Moved Build method here
   @override
   Widget build(BuildContext context) {
-    // Get the total screen size
-    final screenSize = MediaQuery.of(context).size;
+    final height = MediaQuery.of(context).size.height;
 
     return Scaffold(
-      // We use a Stack to layer the header and the form card
+      backgroundColor: const Color(0xFF0F0F11),
       body: Stack(
         children: [
-          // 1. The Purple Header
-          _buildHeader(screenSize),
-
-          // 2. The White Form Card
-          _buildFormCard(screenSize),
-        ],
-      ),
-    );
-  }
-
-  // Helper widget for the purple header (No changes)
-  Widget _buildHeader(Size screenSize) {
-    return Container(
-      height: screenSize.height * 0.4, // Roughly 40% of the screen
-      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Color(0xFF8B5CF6), Color(0xFF6366F1)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(24.0),
-          bottomRight: Radius.circular(24.0),
-        ),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          const Icon(
-            Icons.shopping_cart_outlined,
-            color: Color(0xFFFCD34D), // Yellowish color
-            size: 48.0,
-          ),
-          const SizedBox(height: 8.0),
-          Text(
-            "Hostel Canteen",
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 28.0, // 1.8rem
-              fontWeight: FontWeight.w700,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 4.0),
-          Text(
-            "Connect (HCC)",
-            style: TextStyle(
-              color: Colors.white.withOpacity(0.9), // e0e7ff
-              fontSize: 14.0, // 0.9rem
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Helper widget for the white form card
-  Widget _buildFormCard(Size screenSize) {
-    return Positioned(
-      // Position it 28% from the top, just like the CSS
-      top: screenSize.height * 0.28,
-      // 1rem (16.0) padding on left and right
-      left: 16.0,
-      right: 16.0,
-      bottom: 0, // <-- FIX: Pin the card to the bottom of the Stack
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          // FIX: Only round the top corners since it touches the bottom
-          borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(24.0),
-            topRight: Radius.circular(24.0),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1), // Softer shadow
-              blurRadius: 25.0,
-              offset: const Offset(0, 10),
-            ),
-          ],
-        ),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                "Create Your Account",
-                style: TextStyle(
-                  color: Color(0xFF1F2937),
-                  fontSize: 24.0, // 1.5rem
-                  fontWeight: FontWeight.w700,
+          // 🔹 Fixed purple curved header
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: ClipPath(
+              clipper: BottomCurveClipper(),
+              child: Container(
+                height: height * 0.48,
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Color(0xFF7C4DFF), Color(0xFF6200EA)],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                  ),
                 ),
               ),
-              const SizedBox(height: 24.0), // 1.5rem
+            ),
+          ),
 
-              // 8. Connected controllers to text fields
-              _buildTextField(
-                  placeholder: "Full Name", controller: _nameController),
-              const SizedBox(height: 16.0), // 1rem
-              _buildTextField(
-                  placeholder: "Email", controller: _emailController),
-              const SizedBox(height: 16.0),
-              _buildTextField(
-                  placeholder: "Password",
-                  controller: _passwordController,
-                  isObscure: true),
-              const SizedBox(height: 16.0),
-              // 9. Added "Confirm Password" field for the logic
-              _buildTextField(
-                  placeholder: "Confirm Password",
-                  controller: _confirmPasswordController,
-                  isObscure: true),
-              const SizedBox(height: 16.0),
-              _buildTextField(
-                  placeholder: "Mobile Number", controller: _mobileController),
-              const SizedBox(height: 16.0),
-              _buildTextField(
-                  placeholder: "Room Number", controller: _roomController),
-              const SizedBox(height: 24.0), // 1.5rem
-
-              // 10. Added loading check for button
-              _loading
-                  ? const CircularProgressIndicator() // Show loading spinner
-                  : Container(
-                      // Show Sign Up Button
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFF8B5CF6), Color(0xFF6366F1)],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
+          // 🔹 Scrollable content
+          Center(
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  const SizedBox(height: 80),
+                  // App Title
+                  Column(
+                    children: const [
+                      Icon(Icons.shopping_cart_rounded,
+                          color: Colors.amberAccent, size: 70),
+                      SizedBox(height: 10),
+                      Text(
+                        "Hostel Cantenn Connect",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 26,
+                          fontWeight: FontWeight.bold,
                         ),
-                        borderRadius: BorderRadius.circular(12.0), // 0.75rem
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFF8B5CF6).withOpacity(0.3),
-                            blurRadius: 10.0,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
                       ),
-                      child: Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          onTap:
-                              registerUser, // 11. Connected to registerUser
-                          borderRadius: BorderRadius.circular(12.0),
-                          child: const Padding(
-                            padding:
-                                EdgeInsets.symmetric(vertical: 14.0), // 0.9rem
-                            child: Text(
-                              "Sign Up",
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
+                      Text(
+                        "(HCC)",
+                        style: TextStyle(color: Colors.white70, fontSize: 15),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 40),
+
+                  // 🔹 Signup form box
+                  Container(
+                    width: 330,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 25, vertical: 35),
+                    margin: const EdgeInsets.only(bottom: 50),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1E1E22).withOpacity(0.95),
+                      borderRadius: BorderRadius.circular(25),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.6),
+                          blurRadius: 20,
+                          offset: const Offset(0, 10),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      children: [
+                        const Text(
+                          "Create Your Account",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 25),
+
+                        _buildTextField(_nameController, "Full Name",
+                            Icons.person_outline, false),
+                        const SizedBox(height: 15),
+
+                        _buildTextField(
+                            _emailController, "Email", Icons.email, false),
+                        const SizedBox(height: 15),
+
+                        _buildTextField(
+                            _passwordController, "Password", Icons.lock, true),
+                        const SizedBox(height: 15),
+
+                        _buildTextField(_mobileController, "Mobile Number",
+                            Icons.phone, false),
+                        const SizedBox(height: 15),
+
+                        _buildTextField(_roomController, "Room Number",
+                            Icons.meeting_room, false),
+                        const SizedBox(height: 30),
+
+                        _loading
+                            ? const CircularProgressIndicator(
                                 color: Colors.white,
-                                fontSize: 16.0, // 1rem
-                                fontWeight: FontWeight.w600,
+                              )
+                            : GestureDetector(
+                                onTap: signupUser,
+                                child: Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.symmetric(
+                                      vertical: 14, horizontal: 20),
+                                  decoration: BoxDecoration(
+                                    gradient: const LinearGradient(
+                                      colors: [
+                                        Color(0xFF7C4DFF),
+                                        Color(0xFF6200EA),
+                                      ],
+                                    ),
+                                    borderRadius: BorderRadius.circular(30),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: const Color(0xFF7C4DFF)
+                                            .withOpacity(0.5),
+                                        blurRadius: 15,
+                                      ),
+                                    ],
+                                  ),
+                                  child: const Center(
+                                    child: Text(
+                                      "Sign Up",
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 17,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                        const SizedBox(height: 20),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Text(
+                              "Already have an account? ",
+                              style: TextStyle(color: Colors.white60),
+                            ),
+                            GestureDetector(
+                              onTap: () {
+                                Navigator.pushReplacement(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) =>
+                                          const LoginScreen()),
+                                );
+                              },
+                              child: const Text(
+                                "Log In",
+                                style: TextStyle(
+                                  color: Color(0xFF7C4DFF),
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
-                          ),
-                        ),
-                      ),
+                          ],
+                        )
+                      ],
                     ),
-              const SizedBox(height: 24.0), // 1.5rem
-
-              // 12. Made "Log In" tappable
-              RichText(
-                text: TextSpan(
-                  style: const TextStyle(
-                    color: Color(0xFF6B7280),
-                    fontSize: 14.0, // 0.875rem
-                    fontFamily: 'Inter', // Match default font
                   ),
-                  children: [
-                    const TextSpan(text: "Already have an account? "),
-                    TextSpan(
-                      text: "Log In",
-                      style: const TextStyle(
-                        color: Color(0xFF6366F1),
-                        fontWeight: FontWeight.w600,
-                      ),
-                      // Added recognizer to make it tappable
-                      recognizer: TapGestureRecognizer()
-                        ..onTap = () {
-                          // Navigate back to login screen
-                          if (Navigator.canPop(context)) {
-                             Navigator.pop(context);
-                          }
-                        },
-                    ),
-                  ],
-                ),
+                ],
               ),
-            ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
 
-  // 13. Modified helper to accept a controller
-  Widget _buildTextField(
-      {required String placeholder,
-      bool isObscure = false,
-      required TextEditingController controller}) {
-    return TextFormField(
-      controller: controller, // Set the controller
-      obscureText: isObscure,
-      keyboardType: placeholder.contains("Mobile")
-          ? TextInputType.phone
-          : TextInputType.text,
+  Widget _buildTextField(TextEditingController controller, String label,
+      IconData icon, bool isPassword) {
+    return TextField(
+      controller: controller,
+      obscureText: isPassword,
+      style: const TextStyle(color: Colors.white),
       decoration: InputDecoration(
-        hintText: placeholder,
-        hintStyle: const TextStyle(color: Color(0xFF9CA3AF)),
-        filled: true,
-        fillColor: const Color(0xFFF9FAFB), // Very light bg
-        contentPadding:
-            const EdgeInsets.symmetric(vertical: 14.0, horizontal: 16.0),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12.0), // 0.75rem
-          borderSide: const BorderSide(color: Color(0xFFD1D5DB)), // Gray border
-        ),
+        prefixIcon: Icon(icon, color: Colors.white70),
+        labelText: label,
+        labelStyle: const TextStyle(color: Colors.white70),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12.0),
-          borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
+          borderSide: const BorderSide(color: Colors.white24),
+          borderRadius: BorderRadius.circular(12),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12.0),
-          // Purple accent on focus
-          borderSide: const BorderSide(color: Color(0xFF6366F1), width: 2.0),
+          borderSide: const BorderSide(color: Color(0xFF7C4DFF), width: 2),
+          borderRadius: BorderRadius.circular(12),
         ),
+        filled: true,
+        fillColor: const Color(0xFF2A2A2F),
       ),
     );
   }
 }
 
+// 🔹 Custom clipper for curved header
+class BottomCurveClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    Path path = Path();
+    path.lineTo(0, size.height - 60);
+    path.quadraticBezierTo(
+        size.width / 2, size.height, size.width, size.height - 60);
+    path.lineTo(size.width, 0);
+    path.close();
+    return path;
+  }
+
+  @override
+  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
+}
