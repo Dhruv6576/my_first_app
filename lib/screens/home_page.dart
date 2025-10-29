@@ -14,17 +14,18 @@ class _HomePageState extends State<HomePage> {
   int _selectedIndex = 0;
   final user = FirebaseAuth.instance.currentUser;
 
-  // --- 2. CREATE A LIST OF YOUR PAGES ---
-  // We'll put the product grid in a separate widget
-  // and add the other pages.
+  // --- 2. YOUR LIST OF PAGES (FIXED ORDER) ---
+  // This list now correctly matches the bottom navigation bar
   static final List<Widget> _widgetOptions = <Widget>[
-    const HomeProductGrid(), // Your product grid (defined below)
-    const RequestedOrdersPage(), // Your orders page
+    const HomeProductGrid(), // Index 0: Home
     const Center(
-      child: Text('Category Page', style: TextStyle(color: Colors.white)),
+      // Index 1: Category
+      child: Text('Category Page', style: TextStyle(color: Colors.black)), // Text color changed
     ),
+    const RequestedOrdersPage(), // Index 2: Orders
     const Center(
-      child: Text('Cart Page', style: TextStyle(color: Colors.white)),
+      // Index 3: Cart
+      child: Text('Cart Page', style: TextStyle(color: Colors.black)), // Text color changed
     ),
   ];
 
@@ -36,67 +37,104 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // --- 3. DYNAMIC APPBAR REMOVED ---
-  // The _buildAppBar() function has been removed.
+  // --- 3. DYNAMIC APPBAR LOGIC ---
+  PreferredSizeWidget _buildAppBar() {
+    String titleText;
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF0E0E0E),
-      // --- 4. REPLACED WITH ORIGINAL APPBAR ---
-      // The dynamic _buildAppBar() call is replaced with the
-      // original dark AppBar, which will now show on all pages.
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF0E0E0E),
-        elevation: 0,
-        automaticallyImplyLeading: false,
-        title: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Expanded(
-              child: Text(
-                'Welcome ${user?.email?.split('@')[0] ?? 'User'} 👋\nTo Tomato 🍅',
-                style: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
-                  height: 1.3,
-                ),
-              ),
-            ),
-            IconButton(
-              onPressed: () => _logout(context),
-              icon: const Icon(Icons.account_circle, color: Colors.white, size: 30),
-            ),
-          ],
+    switch (_selectedIndex) {
+      case 0: // Home
+        titleText =
+            'Welcome to our app,\n${user?.email?.split('@')[0] ?? 'User'}';
+        break;
+      case 1: // Category
+        titleText = 'Categories';
+        break;
+      case 2: // Orders
+        titleText = 'Requested Orders'; // Title for the orders page
+        break;
+      case 3: // Cart
+        titleText = 'Your Cart';
+        break;
+      default:
+        titleText = 'Hostel Canteen';
+    }
+
+    return AppBar(
+      elevation: 0,
+      toolbarHeight: 80, // Taller AppBar
+      automaticallyImplyLeading: false,
+      // --- 4. LIGHT GRADIENT APPBAR ---
+      flexibleSpace: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            // Light purple gradient
+            colors: [Color(0xFF8B5CF6), Color(0xFF6366F1)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
         ),
       ),
+      title: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Expanded(
+            child: Text(
+              titleText, // Use the dynamic title
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
+                height: 1.3,
+              ),
+            ),
+          ),
+          IconButton(
+            onPressed: () => _logout(context),
+            icon: const Icon(Icons.account_circle, color: Colors.white, size: 36),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) { // <-- Corrected typo here
+    // --- 5. UPDATED SCAFFOLD FOR LIGHT MODE ---
+    return Scaffold(
+      backgroundColor: const Color(0xFFF4F6FA), // Main light background
+      appBar: _buildAppBar(), // Use the dynamic AppBar
       body:
-          _widgetOptions.elementAt(_selectedIndex), // <-- 5. SHOW THE SELECTED PAGE
+          _widgetOptions.elementAt(_selectedIndex), // Show the selected page
+      // --- 6. LIGHT BOTTOMNAVBAR ---
       bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: const Color(0xFF1E1E1E),
+        backgroundColor: Colors.white, // Light nav background
         currentIndex: _selectedIndex,
-        selectedItemColor: const Color(0xFF00B04B),
-        unselectedItemColor: Colors.grey,
+        selectedItemColor: const Color(0xFF6366F1), // Purple selected
+        unselectedItemColor: Colors.grey[500], // Grey unselected
         type: BottomNavigationBarType.fixed,
+        showSelectedLabels: false,
+        showUnselectedLabels: false,
         onTap: (index) => setState(() => _selectedIndex = index),
+        // These items now match the _widgetOptions list order
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.receipt_long), label: 'Orders'),
-          BottomNavigationBarItem(icon: Icon(Icons.category), label: 'Category'),
-          BottomNavigationBarItem(icon: Icon(Icons.shopping_cart), label: 'Cart'),
+          BottomNavigationBarItem(icon: Icon(Icons.home_filled), label: 'Home'), // Index 0
+          BottomNavigationBarItem(
+              icon: Icon(Icons.add_box_outlined), label: 'Category'), // Index 1
+          BottomNavigationBarItem(
+              icon: Icon(Icons.receipt_long_outlined), label: 'Orders'), // Index 2
+          BottomNavigationBarItem(
+              icon: Icon(Icons.shopping_cart_outlined), label: 'Cart'), // Index 3
         ],
       ),
     );
   }
 }
 
-// --- 6. EXTRACTED YOUR HOME PAGE CONTENT ---
-// This widget contains your original product grid.
+// --- 7. HOME PAGE CONTENT (UPDATED FOR LIGHT UI) ---
 class HomeProductGrid extends StatelessWidget {
   const HomeProductGrid({super.key});
 
-  // Copied your product list here
+  // Your product list
   List<Map<String, dynamic>> get _products => const [
         {
           'name': 'Onion (Dungdi)',
@@ -114,7 +152,6 @@ class HomeProductGrid extends StatelessWidget {
           'image':
               'https://upload.wikimedia.org/wikipedia/commons/8/88/Bright_red_tomato_and_cross_section02.jpg'
         },
-        // ... (rest of your products) ...
         {
           'name': 'Coriander (Kothmir)',
           'weight': '100 g',
@@ -145,7 +182,7 @@ class HomeProductGrid extends StatelessWidget {
           'price': '₹77',
           'mrp': '₹90',
           'image':
-              'https://upload.wikimedia.org/wikipedia/commons/8/88/Bright_red_tomato_and_cross_section02.jpg' // <-- FIX 1
+              'https://upload.wikimedia.org/wikipedia/commons/8/88/Bright_red_tomato_and_cross_section02.jpg'
         },
         {
           'name': 'Banana',
@@ -153,7 +190,7 @@ class HomeProductGrid extends StatelessWidget {
           'price': '₹58',
           'mrp': '₹65',
           'image':
-              'https://upload.wikimedia.org/wikipedia/commons/8/8a/Banana-Single.jpg'
+              'https.upload.wikimedia.org/wikipedia/commons/8/8a/Banana-Single.jpg'
         },
         {
           'name': 'Potato',
@@ -161,7 +198,7 @@ class HomeProductGrid extends StatelessWidget {
           'price': '₹29',
           'mrp': '₹35',
           'image':
-              'https://upload.wikimedia.org/wikipedia/commons/a/ab/Patates.jpg'
+              'https.upload.wikimedia.org/wikipedia/commons/a/ab/Patates.jpg'
         },
         {
           'name': 'Apple Shimla',
@@ -177,7 +214,7 @@ class HomeProductGrid extends StatelessWidget {
           'price': '₹40',
           'mrp': '₹45',
           'image':
-              'https://upload.wikimedia.org/wikipedia/commons/8/88/Bright_red_tomato_and_cross_section02.jpg' // <-- FIX 2
+              'https.upload.wikimedia.org/wikipedia/commons/8/88/Bright_red_tomato_and_cross_section02.jpg'
         },
         {
           'name': 'Tata Salt',
@@ -185,7 +222,7 @@ class HomeProductGrid extends StatelessWidget {
           'price': '₹22',
           'mrp': '₹25',
           'image':
-              'https://upload.wikimedia.org/wikipedia/commons/8/88/Bright_red_tomato_and_cross_section02.jpg' // <-- FIX 3
+              'https.upload.wikimedia.org/wikipedia/commons/8/88/Bright_red_tomato_and_cross_section02.jpg'
         },
         {
           'name': 'Amul Butter',
@@ -196,169 +233,180 @@ class HomeProductGrid extends StatelessWidget {
               'https://upload.wikimedia.org/wikipedia/commons/8/88/Bright_red_tomato_and_cross_section02.jpg'
         },
       ];
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        // Search bar
-        Container(
-          margin: const EdgeInsets.fromLTRB(16, 10, 16, 10),
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          decoration: BoxDecoration(
-            color: const Color(0xFF1E1E1E),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: const TextField(
-            style: TextStyle(color: Colors.white),
-            decoration: InputDecoration(
-              hintText: 'Search for atta, dal, coke and more...',
-              hintStyle: TextStyle(color: Colors.grey),
-              border: InputBorder.none,
-              icon: Icon(Icons.search, color: Colors.grey),
+@override
+Widget build(BuildContext context) {
+  return SafeArea( // <-- Add SafeArea here
+    child: SingleChildScrollView(
+      physics: const BouncingScrollPhysics(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // --- Search Bar ---
+          Container(
+            margin: const EdgeInsets.fromLTRB(16, 16, 16, 10),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.grey.withOpacity(0.1),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
-          ),
-        ),
-
-        // Section Title
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-          child: Align(
-            alignment: Alignment.centerLeft,
-            child: Text(
-              "Bestsellers",
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
+            child: const TextField(
+              style: TextStyle(color: Colors.black),
+              decoration: InputDecoration(
+                hintText: 'Search for items...',
+                hintStyle: TextStyle(color: Colors.grey),
+                border: InputBorder.none,
+                icon: Icon(Icons.search, color: Colors.grey),
               ),
             ),
           ),
-        ),
 
-        // Product Grid
-        Expanded(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: GridView.builder(
-              physics: const BouncingScrollPhysics(),
-              itemCount: _products.length,
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3,
-                crossAxisSpacing: 10,
-                mainAxisSpacing: 12,
-                childAspectRatio: 0.55,
-              ),
-              itemBuilder: (context, index) {
-                final p = _products[index];
-                return Container(
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF1C1C1C),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Stack(
-                        children: [
-                          ClipRRect(
-                            borderRadius: const BorderRadius.only(
-                                topLeft: Radius.circular(12),
-                                topRight: Radius.circular(12)),
-                            child: Image.network(
-                              p['image'],
-                              height: 90,
-                              width: double.infinity,
-                              fit: BoxFit.cover,
-                              // Add error handling for images
-                              errorBuilder: (context, error, stackTrace) {
-                                return Container(
-                                  height: 90,
-                                  color: Colors.grey[800],
-                                  child: const Icon(
-                                    Icons.image_not_supported,
-                                    color: Colors.grey,
-                                  ),
-                                );
-                              },
+          const Padding(
+            padding: EdgeInsets.fromLTRB(16, 16, 16, 4),
+            child: Align(),
+          ),
+
+          // --- Product Grid ---
+          GridView.builder(
+            padding: const EdgeInsets.all(12),
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: _products.length,
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 3,
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
+              childAspectRatio: 0.65,
+            ),
+            itemBuilder: (context, index) {
+              final p = _products[index];
+              return Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.1),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Stack(
+                      children: [
+                        ClipRRect(
+                          borderRadius: const BorderRadius.only(
+                            topLeft: Radius.circular(12),
+                            topRight: Radius.circular(12),
+                          ),
+                          child: Image.network(
+                            p['image'],
+                            height: 100,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Container(
+                                height: 100,
+                                color: Colors.grey[200],
+                                child: Icon(
+                                  Icons.image_not_supported,
+                                  color: Colors.grey[400],
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                        Positioned(
+                          bottom: 8,
+                          right: 8,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [Color(0xFF8B5CF6), Color(0xFF6366F1)],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Text(
+                              'Add',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
-                          Positioned(
-                            bottom: 6,
-                            right: 6,
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF00B04B),
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 10, vertical: 4),
-                              child: const Text(
-                                'ADD',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 11,
+                        ),
+                      ],
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            p['name'],
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: Colors.black,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 13,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            p['weight'],
+                            style:
+                                const TextStyle(color: Colors.grey, fontSize: 11),
+                          ),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              Text(
+                                p['price'],
+                                style: const TextStyle(
+                                  color: Colors.black,
                                   fontWeight: FontWeight.bold,
+                                  fontSize: 13,
                                 ),
                               ),
-                            ),
+                              const SizedBox(width: 4),
+                              Text(
+                                p['mrp'],
+                                style: const TextStyle(
+                                  color: Colors.grey,
+                                  fontSize: 10,
+                                  decoration: TextDecoration.lineThrough,
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
-                      Padding(
-                        padding: const EdgeInsets.all(6.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(p['weight'],
-                                style: const TextStyle(
-                                    color: Colors.grey, fontSize: 11)),
-                            const SizedBox(height: 2),
-                            Text(
-                              p['name'],
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w500,
-                                fontSize: 12,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Row(
-                              children: [
-                                Text(
-                                  p['price'],
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  p['mrp'],
-                                  style: const TextStyle(
-                                    color: Colors.grey,
-                                    fontSize: 10,
-                                    decoration: TextDecoration.lineThrough,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              },
-            ),
+                    ),
+                  ],
+                ),
+              );
+            },
           ),
-        ),
-      ],
-    );
-  }
+
+          const SizedBox(height: 16), // <-- add bottom padding
+        ],
+      ),
+    ),
+  );
 }
-
-
+}
