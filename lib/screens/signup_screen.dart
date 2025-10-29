@@ -83,7 +83,7 @@ class _SignupScreenState extends State<SignupScreen> {
                           color: Colors.amberAccent, size: 70),
                       SizedBox(height: 10),
                       Text(
-                        "Hostel Cantenn Connect",
+                        "Hostel Canteen Connect",
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 26,
